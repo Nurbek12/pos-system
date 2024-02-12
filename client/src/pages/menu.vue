@@ -6,16 +6,16 @@
                     <h2 class="text-primary font-weight-light">TAOMLAR MENYUSI</h2>
                 </div>
             </v-col>
-            <v-col cols="12" sm="6" md="4" lg="3" v-for="item,i in foods" :key="i" class="pa-1">
+            <v-col cols="12" sm="6" md="4" lg="3" v-for="item,i in menu" :key="i" class="pa-1" v-show="item.foods.length>0">
                 <v-sheet>
                     <v-list>
                         <v-list-item>
                             <template #prepend>
                                 <v-avatar rounded>
-                                    <v-img :src="`${baseURL}/file/${item._id?.icon}`"></v-img>
+                                    <v-img :src="`${baseURL}/file/${item.image}`"></v-img>
                                 </v-avatar>
                             </template>
-                            <v-list-item-title class="font-weight-bold text-primary">{{ item._id?.name }}</v-list-item-title>
+                            <v-list-item-title class="font-weight-bold text-primary">{{ item.name }}</v-list-item-title>
                         </v-list-item>
                     </v-list>
                     <v-table density="compact" hover>
@@ -44,12 +44,11 @@ import { ref } from 'vue'
 import { baseURL } from '../api'
 import { get_menu } from '../api/food'
 
-const foods = ref([])
+const menu = ref([])
 
 const init = async () => {
   const { data } = await get_menu()
-  console.log(data);
-  foods.value = data
+  menu.value = data
 }
 
 init()

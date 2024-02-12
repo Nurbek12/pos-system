@@ -17,10 +17,10 @@
                             :headers="headers"
                             item-value="id">
                             <template #item.date="{item}">
-                                <span>{{ new Date(item.createdAt).toLocaleString() }}</span>
+                                <span>{{ new Date(item.created_at).toLocaleString() }}</span>
                             </template>
-                            <template #item.orderId="{item}">
-                                <span>#{{ item.orderId.toString().padStart(6, '0') }}</span>
+                            <template #item.id="{item}">
+                                <span>#{{ item.id.toString().padStart(6, '0') }}</span>
                             </template>
                             <template #item.total="{item}">
                                 <span>{{ Number(item.total).toLocaleString('en-EN') }} so'm</span>
@@ -49,8 +49,7 @@ const totalItems = ref(0);
 const itemsPerPage = ref(25)
 const items = ref([])
 const headers = ref([
-    { title: 'ID', key: 'orderId', sortable: false },
-    { title: 'Buyurtma raqami', key: 'name', sortable: false },
+    { title: 'ID', key: 'id', sortable: false },
     { title: 'Buyurtma narxi', key: 'total', sortable: false },
     { title: 'Sana/Vaqt', key: 'date', sortable: false },
 ])

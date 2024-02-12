@@ -3,11 +3,11 @@
         <v-sheet rounded="xl" width="100%" color="white" class="overflow-hidden" height="50" elevation="0">
             <v-slide-group :show-arrows="false" mandatory v-model="category">
                 <v-slide-group-item v-for="item,n in items" :key="n" v-slot="{ isSelected, toggle }">
-                    <v-btn class="ma-2 text-body-2" rounded variant="flat" :color="isSelected ? 'primary' : undefined" @click="toggle">
+                    <v-btn v-show="item.foods.length>0" class="ma-2 text-body-2" rounded variant="flat" :color="isSelected ? 'primary' : undefined" @click="toggle">
                         <v-avatar size="20" rounded class="mr-2">
-                            <v-img cover :src="`${baseURL}/file/${item?._id?.icon}`"></v-img>
+                            <v-img cover :src="`${baseURL}/file/${item.image}`"></v-img>
                         </v-avatar>
-                        {{ item?._id?.name }}
+                        {{ item.name }} ({{ item.foods.length }})
                     </v-btn>
                 </v-slide-group-item>
                 <template #next>
@@ -37,12 +37,12 @@
                             <v-card-text class="pt-3 pb-2 text-center text-body-1 font-weight-medium">{{ food.name }}</v-card-text>
                             <v-card-text class="text-h6 pt-0 pb-1 text-center text-primary">{{ Number(food.price).toLocaleString('en-EN') }} so'm</v-card-text>
                             <v-card-actions>
-                                <template v-if="cart.some(c => c._id === food._id)">
+                                <template v-if="cart.some(c => c.id === food.id)">
                                     <v-btn rounded @click="removeFromCart(food)" color="primary" variant="flat">
                                         <ChMinus />
                                     </v-btn>
                                     <div class="w-100 text-center text-h6">
-                                        {{ cart.find(c => c._id === food._id)?.quantity }}
+                                        {{ cart.find(c => c.id === food.id)?.quantity }}
                                     </div>
                                     <v-btn rounded @click="addToCart(food)" color="primary" variant="flat">
                                         <GlPlus />
@@ -57,10 +57,6 @@
             <v-col cols="6" md="4" class="pa-2">
                 <v-card rounded="xl" flat>
                     <v-card-title>Buyurtma yaratish</v-card-title>
-                    <v-card-text class="pb-0">
-                        Buyurtma raqami: #{{ (orderId).toString().padStart(6, '0') }}
-                        <span class="text-primary ml-4">{{ generatedFunction(orderId) }}</span>
-                    </v-card-text>
                     <v-card-text class="pb-0">
                         <v-list>
                             <span class="text-grey text-subtitle-1" v-show="cart.length==0">Bo'sh</span>
@@ -85,6 +81,31 @@
             </v-col>
         </v-row>
     </v-container>
+    <v-dialog :model-value="!!order" max-width="500">
+        <v-card rounded="xl" flat>
+            <v-card-text class="pb-0 text-primary text-h3">{{ order?.id ? generatedFunction(order?.id) : 'A-00' }}</v-card-text>
+            <v-card-text class="pt-0">Buyurtma raqami: #{{ (order?.id||0).toString().padStart(6, '0') }}</v-card-text>
+            <v-card-text class="pt-0">Buyurtma narxi: {{ Number(order?.total||0).toLocaleString('en-EN') }} so'm</v-card-text>
+            <v-card-text class="pt-0">
+                <v-table>
+                    <tbody>
+                        <tr v-for="food,i in order?.order_items||[]" :key="i">
+                            <td>
+                                <v-avatar>
+                                    <v-img :src="`${baseURL}/file/${food.food.image}`" cover></v-img>
+                                </v-avatar>
+                            </td>
+                            <td>{{ food.food.price }} x {{ food.quantity }}</td>
+                            <td>{{ food.food.price * food.quantity }}</td>
+                        </tr>
+                    </tbody>
+                </v-table>
+            </v-card-text>
+            <v-card-text class="pt-0">
+                <v-btn color="green" rounded flat block @click="order=null">Davom etish</v-btn>
+            </v-card-text>
+        </v-card>
+    </v-dialog>
 </template>
 
 <script setup>
@@ -92,30 +113,18 @@ import { ref, computed } from 'vue'
 import { baseURL } from '../../api'
 import { get_menu } from '../../api/food'
 import { create_food } from '../../api/socket'
-import { get_counts, create_order } from '../../api/order'
+import { create_order } from '../../api/order'
 import { GlPlus, ChMinus, AkChevronLeft, AkChevronRight } from '@kalimahapps/vue-icons'
 
+const order = ref(null)
 const cart = ref([])
 const items = ref([])
-const orderId = ref(0)
 const category = ref(0)
 const total = computed(() => {
     return cart.value.reduce((a,b) => {
         return a+((b.price||0) * b.quantity)
     }, 0)
 })
-
-const addToCart = (item) => {
-    const itemIndex = cart.value.findIndex((p) => p._id === item._id)
-    if(itemIndex < 0) cart.value.push({...item, quantity: 1 })
-    else cart.value[itemIndex].quantity += 1
-}
-
-const removeFromCart = (item) => {
-    const itemIndex = cart.value.findIndex((p) => p._id === item._id)
-    cart.value[itemIndex].quantity -= 1
-    if(cart.value[itemIndex].quantity == 0) cart.value.splice(itemIndex, 1)
-}
 
 const generatedFunction = (n) => {
     var letterIndex = Math.floor((n - 1) / 99);
@@ -124,26 +133,32 @@ const generatedFunction = (n) => {
     return letter + '-' + number;
 }
 
+const addToCart = (item) => {
+    const itemIndex = cart.value.findIndex((p) => p.id === item.id)
+    if(itemIndex < 0) cart.value.push({...item, quantity: 1 })
+    else cart.value[itemIndex].quantity += 1
+}
+
+const removeFromCart = (item) => {
+    const itemIndex = cart.value.findIndex((p) => p.id === item.id)
+    cart.value[itemIndex].quantity -= 1
+    if(cart.value[itemIndex].quantity == 0) cart.value.splice(itemIndex, 1)
+}
+
 const init = async () => {
-    const [m,c] = await Promise.all([
-        get_menu(),
-        get_counts()
-    ])
-    items.value = m.data
-    orderId.value = c.data+1
+    const { data } = await get_menu()
+    items.value = data
+    category.value = items.value.findIndex(c => c?.foods?.length>0) || 0
 }
 
 const create = async () => {
-    generatedFunction(orderId.value)
     const newOrder = {
-        name: generatedFunction(orderId.value),
         total: total.value,
-        foods: cart.value.map(({_id, quantity})=>({food: _id, quantity}))
+        items: cart.value.map(({id, quantity})=>({food: id, quantity}))
     }
     const { data } = await create_order(newOrder)
-    // console.log(data);
+    order.value = data
     create_food(data)
-    orderId.value += 1
     cart.value = []
 }
 

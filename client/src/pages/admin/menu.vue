@@ -22,7 +22,7 @@
                                     <v-btn size="40" color="primary" rounded flat @click="editItem(item, index)">
                                         <BxSolidPencil style="width: 20px; height: 20px;" />
                                     </v-btn>
-                                    <v-btn size="40" color="primary" rounded flat @click="deleteItem(item._id, index)">
+                                    <v-btn size="40" color="primary" rounded flat @click="deleteItem(item.id, index)">
                                         <MdRoundDelete style="width: 20px; height: 20px;" />
                                     </v-btn>
                                 </div>
@@ -51,7 +51,7 @@
                         <v-text-field color="primary" rounded variant="outlined" flat v-model="item.price" hide-details label="Narxi" min="0" type="number"></v-text-field>
                     </v-col>
                     <v-col cols="12">
-                        <v-select color="primary" rounded variant="outlined" flat v-model="item.category" :items="categories" item-title="name" item-value="_id" hide-details label="Kategoriya" />
+                        <v-select color="primary" rounded variant="outlined" flat v-model="item.category_id" :items="categories" item-title="name" item-value="id" hide-details label="Kategoriya" />
                     </v-col>
                     <v-col cols="12">
                         <v-btn height="50" @click="save" color="primary" variant="flat" rounded block>Saqlash</v-btn>
@@ -93,7 +93,7 @@ const currentImage = computed(() => {
 const item = reactive({
     name: "",
     price: 0,
-    category: null
+    category_id: null
 })
 
 const handleAddImage = () => {
@@ -131,7 +131,9 @@ const add = async (body) => {
 }
 
 const update = async (index, body) => {
-    const { data } = await update_food(body.get('_id'), body)
+    const id = body.get('id')
+    body.delete('id')
+    const { data } = await update_food(id, body)
     
     Object.assign(items.value[index], data)
 }
@@ -141,14 +143,10 @@ const save = async () => {
         createLoading.value = true
         const formdata = new FormData()
         Object.keys(item).map(key => {
-            if(key === 'category') {
-                formdata.append(key, typeof item[key] === 'object' ? item[key]._id : item[key])
-            }else{
-                formdata.append(key, item[key])
-            }
+            formdata.append(key, item[key])
         })
+        formdata.delete('category')
         if(image.value?.[0]) formdata.append('file', image.value?.[0])
-        console.log(itemIndex.value);
         if(itemIndex.value !== null)
             await update(itemIndex.value, formdata)
         else
@@ -164,7 +162,8 @@ const save = async () => {
 const close = () => {
     Object.assign(item, {
         name: "",
-        price: 0
+        price: 0,
+        category_id: null,
     })
     dialog.value = false
     itemIndex.value = null

@@ -1,7 +1,8 @@
 import io from 'socket.io-client'
-// import { baseURL } from '.'
+import { baseURL } from '.'
 
-const socket = io('/')
+// const socket = io('/')
+const socket = io(baseURL)
 
 export const create_food = (data) => socket.emit('create-food', data)
 

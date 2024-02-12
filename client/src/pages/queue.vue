@@ -7,7 +7,7 @@
                     <v-table hover>
                         <tbody>
                             <tr v-for="item,i in notcompleted" :key="i">
-                                <td class="text-h4 text-red-accent-3 font-weight-bold">{{ item.name }}</td>
+                                <td class="text-h4 text-red-accent-3 font-weight-bold">{{ generatedFunction(item.id) }}</td>
                             </tr>
                         </tbody>
                     </v-table>
@@ -19,7 +19,7 @@
                     <v-table hover>
                         <tbody>
                             <tr v-for="item,i in completed" :key="i">
-                                <td class="text-h4 text-green-accent-3 font-weight-bold">{{ item.name }}</td>
+                                <td class="text-h4 text-green-accent-3 font-weight-bold">{{ generatedFunction(item.id) }}</td>
                             </tr>
                         </tbody>
                     </v-table>
@@ -38,8 +38,15 @@ const items = ref([])
 const completed = computed(() => items.value.filter(i => i.completed))
 const notcompleted = computed(() => items.value.filter(i => !i.completed))
 
+const generatedFunction = (n) => {
+    var letterIndex = Math.floor((n - 1) / 99);
+    var letter = String.fromCharCode((letterIndex % 26) + 65);
+    var number = ((n - 1) % 99) + 1;
+    return letter + '-' + number
+}
+
 const init = async () => {
-    const { data } = await get_orders()
+    const { data } = await get_orders({})
     items.value = data.result
 }
 
@@ -47,11 +54,11 @@ init()
 
 food_created(data => items.value.unshift(data))
 food_completed((id) => {
-    const index = items.value.findIndex(i => i._id === id)
+    const index = items.value.findIndex(i => i.id === id)
     items.value[index] = {...items.value[index], completed:true}
 })
 food_deleted((id) => {
-    const index = items.value.findIndex(i => i._id === id)
+    const index = items.value.findIndex(i => i.id === id)
     items.value.splice(index, 1)
 })
 </script>

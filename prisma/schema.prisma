@@ -1,0 +1,67 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Food {
+  id Int @id @default(autoincrement())
+  
+  price Int
+  name String
+  image String
+
+  category_id Int
+  category Category @relation(fields: [category_id], references: [id])
+
+  order_items OrderItem[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Category {
+  id Int @id @default(autoincrement())
+  
+  name String
+  image String
+  
+  foods Food[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Order {
+  id Int @id @default(autoincrement())
+  
+  total Int
+  archive Boolean @default(false)
+  completed Boolean @default(false)
+
+  order_items OrderItem[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model OrderItem {
+  id Int @id @default(autoincrement())
+  
+  order_id Int?
+  order Order? @relation(fields: [order_id], references: [id])
+
+  food_id Int
+  food Food @relation(fields: [food_id], references: [id])
+
+  quantity Int
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}

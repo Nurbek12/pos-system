@@ -4,9 +4,9 @@
             <v-col cols="12">
                 <v-menu :close-on-content-click="false">
                     <template #activator="{props}">
-                        <v-btn v-bind="props">Kunlarni belgilash</v-btn>
+                        <v-btn rounded color="primary" flat v-bind="props">Kunlarni belgilash</v-btn>
                     </template>
-                    <v-date-picker hide-header multiple="range" v-model="days" @update:model-value="logging"></v-date-picker>
+                    <v-date-picker flat rounded="xl" color="primary" mandatory hide-header multiple="range" v-model="days" @update:model-value="logging"></v-date-picker>
                 </v-menu>
             </v-col>
             <v-col cols="12" md="6">
@@ -28,15 +28,16 @@
 </template>
 
 <script setup>
+import { ref, computed } from 'vue'
 import Apexchart from 'vue3-apexcharts'
-import { ref, computed, reactive } from 'vue'
-import { get_statistics } from '../../api/statistic'
+import { get_statistics, get_food_statistics } from '../../api/statistic'
 
 const days = ref(new Date())
 const orders = ref([])
 const foods = ref([])
 const filters = ref({
-    day: new Date().toLocaleDateString()
+    gt: new Date(),
+    lt: new Date(),
 })
 const series = computed(() => ([{
     name: 'Sotuvlar soni',
@@ -53,6 +54,7 @@ const chartOptions = computed(() => ({
     plotOptions: {
         bar: {
             borderRadius: 10,
+            columnWidth: 50,
             dataLabels: {
                 position: 'top', // top, center, bottom
             },
@@ -60,10 +62,7 @@ const chartOptions = computed(() => ({
     },
     dataLabels: {
         enabled: true,
-        // formatter: function (val) {
-        //     return val + "%";
-        // },
-        offsetY: -20,
+        offsetY: -25,
         style: {
             fontSize: '12px',
             colors: ["#304758"]
@@ -71,7 +70,7 @@ const chartOptions = computed(() => ({
     },
 
     xaxis: {
-        categories: orders.value.map(d => d?.day),
+        categories: (orders.value.length>0?orders.value.map(d => d?.day):[new Date().toLocaleDateString()]),
         position: 'top',
         axisBorder: {
             show: false
@@ -133,24 +132,21 @@ const donut_chartOptions = computed(() => ({
 
 const logging = (e) => {
     if(e.length === 0) return
-    if(e.length === 1) {
-        filters.value = {
-            day: new Date(e[0]).toLocaleDateString()
-        }
-    }else{
-        filters.value = {
-            start: new Date(e.at(0)).toLocaleDateString(),
-            end: new Date(e.at(-1)).toLocaleDateString()
-        }
+    filters.value = {
+        gt: new Date(e.at(0)),
+        lt: new Date(e.at(-1)||e.at(0))
     }
     init()
 }
 
 const init = async () => {
-    // console.log(filters.value);
+    filters.value.gt.setHours(0,0,0,0)
+    filters.value.lt.setHours(23, 59, 59, 999);
     const { data } = await get_statistics(filters.value)
-    orders.value = data?.find(d=> d?._id === 'order')?.data || []
-    foods.value = data?.find(d=> d?._id === 'food')?.data || []
+    orders.value = Object.keys(data).map((key) => ({ day: key, quantity: data[key] }))
+
+    const f = await get_food_statistics(filters.value)
+    foods.value = Object.keys(f.data).map((key) => ({ name: key, quantity: f.data[key] }))
 }
 
 init()

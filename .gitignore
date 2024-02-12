@@ -1,3 +1,5 @@
 /node_modules
 /Todo.todo
+/upload/
+/upload/!t.txt
 /.env
