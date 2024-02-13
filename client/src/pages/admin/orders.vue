@@ -75,7 +75,7 @@
                         Jami: {{ Number(total).toLocaleString('en-EN') }} so'm
                     </v-card-text>
                     <v-card-actions>
-                        <v-btn @click="create" :disabled="cart.length<=0" rounded color="primary" variant="elevated" block flat>Yaratish</v-btn>
+                        <v-btn :loading="loading" @click="create" :disabled="cart.length<=0" rounded color="primary" variant="elevated" block flat>Yaratish</v-btn>
                     </v-card-actions>
                 </v-card>
             </v-col>
@@ -117,6 +117,7 @@ import { create_order } from '../../api/order'
 import { GlPlus, ChMinus, AkChevronLeft, AkChevronRight } from '@kalimahapps/vue-icons'
 
 const order = ref(null)
+const loading = ref(false)
 const cart = ref([])
 const items = ref([])
 const category = ref(0)
@@ -152,6 +153,7 @@ const init = async () => {
 }
 
 const create = async () => {
+    loading.value = true
     const newOrder = {
         total: total.value,
         items: cart.value.map(({id, quantity})=>({food: id, quantity}))
@@ -159,6 +161,7 @@ const create = async () => {
     const { data } = await create_order(newOrder)
     order.value = data
     create_food(data)
+    loading.value = false
     cart.value = []
 }
 

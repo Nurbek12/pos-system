@@ -14,12 +14,18 @@
                     <v-card-text>
                         <apexchart type="bar" height="350" :options="chartOptions" :series="series"></apexchart>
                     </v-card-text>
+                    <v-card-text class="text-right">
+                        <span>Jami tushum: {{ totalSum }} so'm</span>
+                    </v-card-text>
                 </v-card>
             </v-col>
             <v-col cols="12" md="6">
                 <v-card rounded="xl" flat>
                     <v-card-text>
                         <apexchart type="donut" height="360" :options="donut_chartOptions" :series="donut_series"></apexchart>
+                    </v-card-text>
+                    <v-card-text class="text-right">
+                        <span>Sotilgan ovqatlar: {{ totalFoods }}</span>
                     </v-card-text>
                 </v-card>
             </v-col>
@@ -130,6 +136,18 @@ const donut_chartOptions = computed(() => ({
     }],
 }))
 
+const totalSum = computed(() => {
+    return orders.value.reduce((a,b) => {
+        return a + b.total
+    },0).toLocaleString('en-EN')
+})
+
+const totalFoods = computed(() => {
+    return foods.value.reduce((a,b) => {
+        return a + b.quantity
+    },0).toLocaleString('en-EN')
+})
+
 const logging = (e) => {
     if(e.length === 0) return
     filters.value = {
@@ -143,10 +161,9 @@ const init = async () => {
     filters.value.gt.setHours(0,0,0,0)
     filters.value.lt.setHours(23, 59, 59, 999);
     const { data } = await get_statistics(filters.value)
-    orders.value = Object.keys(data).map((key) => ({ day: key, quantity: data[key] }))
-
+    orders.value = data;
     const f = await get_food_statistics(filters.value)
-    foods.value = Object.keys(f.data).map((key) => ({ name: key, quantity: f.data[key] }))
+    foods.value = f.data
 }
 
 init()

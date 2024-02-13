@@ -4,17 +4,18 @@ const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient({})
 
 function count_by_days(data) {
-    const counts = {} // Initialize an array with 8 zeros
+    const counts = {}
     let k
     data.map((c) => {
         if(k == c.created_at.toLocaleDateString()) {
-            counts[k] += 1
+            counts[k][0] += 1
+            counts[k][1] += c.total
         }else{
             k = c.created_at.toLocaleDateString()
-            counts[k] = 1
+            counts[k] = [1, c.total]
         }
     })
-    return counts
+    return Object.entries(counts).map(([day, [quantity, total]]) => ({ day, quantity, total }))
 }
 
 function count_foods(data) {
@@ -28,7 +29,7 @@ function count_foods(data) {
             counts[k] = c.quantity
         }
     })
-    return counts
+    return Object.entries(counts).map(([name, quantity]) => ({ name, quantity }))
 }
 
 module.exports = {
