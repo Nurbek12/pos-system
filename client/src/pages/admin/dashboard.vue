@@ -161,9 +161,9 @@ const init = async () => {
     filters.value.gt.setHours(0,0,0,0)
     filters.value.lt.setHours(23, 59, 59, 999);
     const { data } = await get_statistics(filters.value)
-    orders.value = data;
+    orders.value = data || [];
     const f = await get_food_statistics(filters.value)
-    foods.value = f.data
+    foods.value = f.data || []
 }
 
 init()
