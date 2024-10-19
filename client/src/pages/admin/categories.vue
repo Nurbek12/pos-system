@@ -75,7 +75,7 @@ const headers = [
 
 const currentImage = computed(() => {
     if (image.value?.[0]) return URL.createObjectURL(image.value[0])
-    return '/images/nophoto.jpg'
+    return '/nophoto.jpg'
 })
 
 const item = reactive({
